@@ -1,100 +1,155 @@
-# DevOps Project Report: Automated CI/CD Pipeline for a 2-Tier Flask Application on AWS
+# Automated CI/CD Pipeline for a Two-Tier Flask Application on AWS
 
 **Author:** Bhavya Reddy Ganta  
 **Date:** January 2026  
+**Repository:** https://github.com/gantab665/two-tier-flask-mysql-jenkins
 
 ---
 
 ## Table of Contents
 
-1. [Project Overview](#project-overview)  
-2. [Architecture Diagram](#architecture-diagram)  
-3. [Step 1: AWS EC2 Instance Preparation](#step-1-aws-ec2-instance-preparation)  
-4. [Step 2: Install Dependencies on EC2](#step-2-install-dependencies-on-ec2)  
-5. [Step 3: Jenkins Installation and Setup](#step-3-jenkins-installation-and-setup)  
-6. [Step 4: GitHub Repository Configuration](#step-4-github-repository-configuration)  
-   - [Dockerfile](#dockerfile)  
-   - [docker-compose.yml](#docker-composeyml)  
-   - [Jenkinsfile](#jenkinsfile)  
-7. [Step 5: Jenkins Pipeline Creation and Execution](#step-5-jenkins-pipeline-creation-and-execution)  
-8. [Conclusion](#conclusion)  
-9. [Infrastructure Diagram](#infrastructure-diagram)  
-10. [Work Flow Diagram](#work-flow-diagram)  
+1. Project Overview  
+2. Architecture Overview  
+3. AWS EC2 Instance Preparation  
+4. Installing Dependencies on EC2  
+5. Jenkins Installation and Setup  
+6. GitHub Repository Configuration  
+7. Jenkins Pipeline Creation and Execution  
+8. Application Access  
+9. Conclusion  
 
 ---
 
 ## 1. Project Overview
 
-This document outlines the step-by-step process for deploying a **2-tier web application (Flask + MySQL)** on an **AWS EC2 instance**.  
-The deployment is containerized using **Docker** and **Docker Compose**.  
+This project demonstrates an **end-to-end DevOps CI/CD pipeline** for deploying a **two-tier web application (Flask + MySQL)** on **AWS EC2**.
 
-A full **CI/CD pipeline** is established using **Jenkins** to automate the build and deployment process whenever new code is pushed to a **GitHub repository**.
+The application is containerized using **Docker** and orchestrated with **Docker Compose**.  
+A **Jenkins CI/CD pipeline** automates the build and deployment process whenever changes are pushed to the GitHub repository.
 
-The objective of this project is to demonstrate:
-- Automated CI/CD using Jenkins  
-- Containerized application deployment using Docker  
-- Multi-container orchestration using Docker Compose  
-- End-to-end DevOps workflow on AWS EC2 (t2.micro, us-east-1)
-
----
-## 2. Architecture Diagram
-
-The following diagram represents the high-level architecture and workflow of the CI/CD pipeline used in this project.
-
-```text
-+-----------------+      +----------------------+      +-----------------------------+
-|   Developer     |----->|     GitHub Repo      |----->|        Jenkins Server       |
-| (pushes code)   |      | (Source Code Mgmt)   |      |  (on AWS EC2)               |
-+-----------------+      +----------------------+      |                             |
-                                                       | 1. Clones Repo              |
-                                                       | 2. Builds Docker Image      |
-                                                       | 3. Runs Docker Compose      |
-                                                       +--------------+--------------+
-                                                                      |
-                                                                      | Deploys
-                                                                      v
-                                                       +-----------------------------+
-                                                       |      Application Server     |
-                                                       |      (Same AWS EC2)         |
-                                                       |                             |
-                                                       | +-------------------------+ |
-                                                       | | Docker Container: Flask | |
-                                                       | +-------------------------+ |
-                                                       |              |              |
-                                                       |              v              |
-                                                       | +-------------------------+ |
-                                                       | | Docker Container: MySQL | |
-                                                       | +-------------------------+ |
-                                                       +-----------------------------+
-
+### Key Objectives:
+- Automate application deployment using Jenkins
+- Containerize application using Docker
+- Use Docker Compose for multi-container orchestration
+- Deploy on AWS EC2 (t2.micro, us-east-1)
+- Demonstrate real-world DevOps workflow
 
 ---
 
-## 3. Step 1: AWS EC2 Instance Preparation
+## 2. Architecture Overview
 
-### 1. Launch EC2 Instance
-- Navigate to the **AWS EC2 Console**
-- Launch a new EC2 instance using the **Ubuntu 22.04 LTS AMI**
-- Select the **t2.micro** instance type (free-tier eligible)
-- Choose the **us-east-1** region
-- Create and assign a **key pair** for SSH access
+High-level workflow of the project:
 
-![EC2 Instance Running](screenshots/ec2-instance.png)
+- Developer pushes code to GitHub
+- Jenkins pulls the latest code
+- Jenkins builds Docker images
+- Jenkins runs Docker Compose
+- Flask application communicates with MySQL container
+- Application is exposed via public EC2 IP
 
----
-
-### 2. Configure Security Group
-Create a security group with the following inbound rules:
-
-- **SSH** – TCP – Port **22** – Source: Your IP  
-- **HTTP** – TCP – Port **80** – Source: Anywhere (0.0.0.0/0)  
-- **Custom TCP** – Port **5000** (Flask) – Source: Anywhere (0.0.0.0/0)  
-- **Custom TCP** – Port **8080** (Jenkins) – Source: Anywhere (0.0.0.0/0)  
+**Components Used:**
+- AWS EC2 (Ubuntu 22.04 LTS)
+- GitHub
+- Jenkins
+- Docker & Docker Compose
+- Flask
+- MySQL
 
 ---
 
-### 3. Connect to EC2 Instance
-```bash
-ssh -i <your-key.pem> ubuntu@<public-ip-address>
+## 3. AWS EC2 Instance Preparation
+
+### EC2 Configuration:
+- **AMI:** Ubuntu 22.04 LTS
+- **Instance Type:** t2.micro
+- **Region:** us-east-1
+- **Key Pair:** Used for SSH access
+
+### Security Group Inbound Rules:
+- SSH — TCP 22 — Source: Your IP
+- HTTP — TCP 80 — Source: Anywhere (0.0.0.0/0)
+- Flask App — TCP 5000 — Source: Anywhere (0.0.0.0/0)
+- Jenkins — TCP 8080 — Source: Anywhere (0.0.0.0/0)
+
+---
+
+## 4. Installing Dependencies on EC2
+
+After connecting to the EC2 instance, the following tools are installed:
+
+- Docker
+- Docker Compose
+- Git
+- Java (required for Jenkins)
+
+The system is updated and Docker is configured to run without sudo.
+
+---
+
+## 5. Jenkins Installation and Setup
+
+- Jenkins is installed on the same EC2 instance
+- Jenkins runs on port **8080**
+- Initial admin password is retrieved from the server
+- Required plugins are installed:
+  - Pipeline
+  - Git
+  - Docker Pipeline
+
+Jenkins is used to automate the CI/CD workflow.
+
+---
+
+## 6. GitHub Repository Configuration
+
+The GitHub repository contains:
+
+- `Dockerfile` — Builds Flask application image
+- `docker-compose.yml` — Defines Flask and MySQL services
+- `Jenkinsfile` — Defines CI/CD pipeline stages
+- `app/` — Flask application source code
+
+GitHub credentials are securely added to Jenkins using the **Credentials Manager**.
+
+---
+
+## 7. Jenkins Pipeline Creation and Execution
+
+### Pipeline Workflow:
+1. Clone GitHub repository
+2. Build Docker images
+3. Start containers using Docker Compose
+4. Deploy the application
+
+The pipeline is triggered manually or on code changes and completes without manual intervention.
+
+---
+
+## 8. Application Access
+
+Once deployment is successful, services are accessible using the EC2 public IP:
+
+- **Flask Application:**  http://<EC2_PUBLIC_IP>:5000
+- **Jenkins Dashboard:**  http://<EC2_PUBLIC_IP>:8080
+
+
+MySQL runs internally and is not exposed publicly.
+
+---
+
+## 9. Conclusion
+
+This project successfully demonstrates how to build and deploy a **production-style CI/CD pipeline** using Jenkins, Docker, and AWS EC2.
+
+It highlights core DevOps concepts such as:
+- Continuous Integration and Deployment
+- Infrastructure configuration
+- Containerization
+- Automation
+
+This setup can be extended further using load balancers, auto-scaling, monitoring, and cloud-native CI/CD tools.
+
+---
+
 
 
