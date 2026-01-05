@@ -79,8 +79,7 @@ The following diagram represents the high-level architecture and workflow of the
 - Choose the **us-east-1** region
 - Create and assign a **key pair** for SSH access
 
-![EC2 Instance Running](./screenshots/ec2-instance-running.png)
-
+![EC2 Instance Running](screenshots/ec2-instance.png)
 
 ---
 
